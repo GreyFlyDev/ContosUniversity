@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using Contos.DAL;
 using Contos.Models;
+using PagedList;
 
 namespace Contos.Controllers
 {
@@ -16,10 +17,22 @@ namespace Contos.Controllers
         private SchoolContext db = new SchoolContext();
 
         // GET: Students
-        public ActionResult Index(string sortOrder, string searchString)
+        public ActionResult Index(string sortOrder, string currentFilter, string searchString, int? page)
         {
+            ViewBag.CurrentOrder = sortOrder;
             ViewBag.NamesortParam = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             ViewBag.DateSortParam = sortOrder == "Date" ? "date_desc" : "Date";
+
+            if(searchString != null)
+            {
+                page = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+            ViewBag.CurrentFilter = searchString;
+
             var students = from s in db.Students
                            select s;
 
@@ -43,7 +56,11 @@ namespace Contos.Controllers
                     students = students.OrderBy(s => s.LastName);
                     break;
             }
-            return View(students.ToList());
+
+            int pageSize = 3;
+            // the expression (page ?? 1) means return the value of page if it has a value, or return 1 if page is null
+            int pageNumber = (page ?? 1);
+            return View(students.ToPagedList(pageNumber, pageSize));
         }
 
         // GET: Students/Details/5
