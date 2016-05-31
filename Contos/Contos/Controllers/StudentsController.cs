@@ -16,12 +16,17 @@ namespace Contos.Controllers
         private SchoolContext db = new SchoolContext();
 
         // GET: Students
-        public ActionResult Index(string sortOrder)
+        public ActionResult Index(string sortOrder, string searchString)
         {
             ViewBag.NamesortParam = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             ViewBag.DateSortParam = sortOrder == "Date" ? "date_desc" : "Date";
             var students = from s in db.Students
                            select s;
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                students = students.Where(s => s.LastName.Contains(searchString) || s.FirstMidName.Contains(searchString));
+            }
 
             switch (sortOrder)
             {
@@ -38,7 +43,7 @@ namespace Contos.Controllers
                     students = students.OrderBy(s => s.LastName);
                     break;
             }
-            return View(db.Students.ToList());
+            return View(students.ToList());
         }
 
         // GET: Students/Details/5
