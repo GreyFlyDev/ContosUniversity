@@ -84,17 +84,38 @@ namespace Contos.Controllers
         // POST: Students/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "StudentID,LastName,FirstMidName,EnrollmentDate")] Student student)
+        public ActionResult EditPost(int? id)
         {
-            if (ModelState.IsValid)
+            if (id == null)
             {
-                db.Entry(student).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            return View(student);
+
+            var studentToUpdate = db.Students.Find(id);
+            /*
+             * As a best practice to prevent overposting, the fields that you 
+             * want to be updateable by the Edit page are whitelisted in the 
+             * TryUpdateModel parameters. Currently there are no extra fields that you're protecting,
+             *  but listing the fields that you want the model binder to bind ensures 
+             *  that if you add fields to the data model in the future, they're 
+             *  automatically protected until you explicitly add them here.
+             */
+            if (TryUpdateModel(studentToUpdate, "",
+                new string[] { "LastName", "FirstMidName", "EnrollmentDate" }))
+            {
+                try
+                {
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch
+                {
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists see your system administrator.");
+                }
+            }
+            return View(studentToUpdate);
         }
 
         // GET: Students/Delete/5
